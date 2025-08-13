@@ -6,6 +6,130 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
+import { Mail, Phone, Search as SearchIcon, Download, ExternalLink, MapPin, Clock, Settings, LayoutGrid, Rows3, X } from "lucide-react";
+import Papa from "papaparse";
+
+// ----------------------------- Types -----------------------------
+export type DirectoryRecord = {
+  "Person ID"?: string;
+  "Manager ID"?: string;
+  "Manager Email"?: string;
+  "Is Team Lead"?: string | boolean;
+  "Sort Order"?: number | string;
+  "Employee Type"?: string;
+
+  Division?: string;
+  Department?: string;
+  Team?: string;
+
+  Name?: string;
+  Title?: string;
+  "Mobile #"?: string;
+  "Office #"?: string;
+  Email?: string;
+
+  "Team Email"?: string;
+  "Support Phone"?: string;
+
+  South?: string; Southeast?: string; Midwest?: string; Northeast?: string; Pacific?: string;
+
+  "Location Support"?: string;
+  "ChangeGear Self-Service Portal"?: string; "ChangeGear Self-Service Portal Description"?: string;
+  "Enrollment Technology Hub"?: string; "Enrollment Technology Hub Description"?: string;
+  "Propr Resource"?: string; "Plan Administrator Support"?: string; "Field Office Representatives Support"?: string;
+  "Claim Forms/Doc Support"?: string; "VB Claims"?: string; "Dental Claims"?: string; "Vision Claims"?: string;
+  "Disability + A&H Claims"?: string; "Special Risk Claims (Cancer/CI/Life)"?: string; Life?: string;
+  "Supplemental Health (Accident, Critical Illness, Cancer, Hospital Indemnity)"?: string;
+  "Disability Plus / Paid Leave"?: string; Dental?: string;
+  Resource?: string; Description?: string; Days?: string; Hours?: string; Location?: string; Timezone?: string; Notes?: string;
+  "Alliance Partners Managed"?: string; "Oversight Partners"?: string;
+
+  _Regions?: string[];
+};
+
+// ----------------------------- Constants -----------------------------
+export const REGION_KEYS = ["South", "Southeast", "Midwest", "Northeast", "Pacific"] as const;
+export const REGION_COLORS: Record<string, string> = {
+  South: "#092C48",
+  Southeast: "#B72B33",
+  Northeast: "#74922C",
+  Midwest: "#007C85",
+  Pacific: "#D46201",
+};
+
+// ----------------------------- Helpers -----------------------------
+export const truthyFlag = (v?: string) => {
+  if (!v) return false;
+  const s = String(v).trim().toLowerCase();
+  return ["y","yes","true","1","✓","x"].includes(s);
+};
+export const deriveRegions = (r: DirectoryRecord) => REGION_KEYS.filter(k => truthyFlag(r[k])).map(k=>k);
+const normalize = (s?: string) => (s || '').trim();
+const personId = (r: DirectoryRecord) => normalize(r['Person ID']) || normalize(r.Email);
+const managerId = (r: DirectoryRecord) => normalize(r['Manager ID']) || normalize(r['Manager Email']);
+const sortOrderNum = (r: DirectoryRecord) => {
+  const v = (typeof r['Sort Order'] === 'string' ? Number(r['Sort Order']) : (r['Sort Order'] as number)) || 0;
+  return Number.isFinite(v) ? v : 0;
+};
+const mailto = (v?: string) => (v ? `mailto:${v}` : undefined);
+const telLink = (v?: string) => (v ? `tel:${(v||'').replace(/[^+\d]/g,'')}` : undefined);
+
+function isNonValue(v?: string) {
+  if (!v) return true;
+  const s = String(v).trim();
+  if (s === "") return true;
+  return /^(false|no|n|0|na|n\/a|n\.?a\.?|none|tbd|to be determined|\-|--)$/i.test(s);
+}
+function show(v?: string) { return !isNonValue(v); }
+
+function sameRecord(a?: DirectoryRecord | null, b?: DirectoryRecord | null) {
+  if (!a || !b) return false;
+  const aKey = `${a.Name || ''}|${a.Email || ''}|${a.Title || ''}`;
+  const bKey = `${b.Name || ''}|${b.Email || ''}|${b.Title || ''}`;
+  return aKey === bKey;
+}
+
+function triggerDownload(url: string, filename: string){ const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url); }
+function uniqSorted(arr: string[]){ return Array.from(new Set(arr)).sort((a,b)=> a.localeCompare(b)); }
+function trimAll<T extends Record<string, any>>(obj: T): T {
+  const out = { ...obj };
+  Object.keys(out).forEach((k) => { const v = out[k as keyof T]; if (typeof v === "string") out[k as keyof T] = v.trim() as any; });
+  return out;
+}
+
+export function RegionPill({ name }:{ name:string }){
+  const color = REGION_COLORS[name] || '#5B7183';
+  const style: React.CSSProperties = { color, borderColor: color, borderWidth: 1 };
+  return <span aria-label={`Region ${name}`} className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-white border" style={style}>{name}</span>;
+}
+
+// Accessible hierarchy color styles
+function hierarchyClasses(depth: number): string {
+  if (depth === 0) return "bg-sky-800 text-white border-sky-900";
+  if (depth === 1) return "bg-emerald-700 text-white border-emerald-800";
+  if (depth === 2) return "bg-indigo-700 text-white border-indigo-800";
+  return "bg-slate-50 text-slate-900 border-slate-300";
+}
+
+// Responsive helpers
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState<boolean>(() => typeof window !== 'undefined' ? window.matchMedia('(min-width: 768px)').matches : true);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(min-width: 768px)');
+    const handler = (e: MediaQueryListEvent | MediaQueryList) => setIsDesktop(('matches' in e ? e.matches : (e as MediaQueryList).matches));
+    setIsDesktop(mq.matches);
+    if ((mq as any).addEventListener) mq.addEventListener('change', handler as any);
+    else (mq as any).addListener(handler as any);
+    return () => {
+      if ((mq as any).removeEventListener) mq.removeEventListener('change', handler as any);
+      else (mq as any).removeListener(handler as any);
+    };
+  }, []);
+  return isDesktop;
+}
+
 import { Search as SearchIcon } from "lucide-react";
 import { ViewToggle, FilterSelect, CardsView, TableView, BrowseView, DetailsSheet, AdminTools } from "@/components";
 import { DirectoryRecord } from "@/types";
