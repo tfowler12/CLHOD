@@ -472,8 +472,8 @@ function CardsView({ records, selected, onToggle, favorites, onToggleFavorite }:
 }){
   return (
     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-      {records.map((r, idx)=>(
-        <Card key={idx} className="rounded-2xl shadow-sm hover:shadow-md transition-all cursor-pointer group" onClick={()=> onToggle(r)}>
+      {records.map((r)=>(
+        <Card key={personId(r)} className="rounded-2xl shadow-sm hover:shadow-md transition-all cursor-pointer group" onClick={()=> onToggle(r)}>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">
               <div className="flex items-start justify-between gap-2">
@@ -546,8 +546,8 @@ function TableView({ records, onOpen, favorites, onToggleFavorite }: {
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-200">
-          {records.map((r, i)=> (
-            <tr key={i} className="cursor-pointer hover:bg-slate-50 transition-colors" onClick={()=> onOpen(r)}>
+          {records.map((r)=> (
+            <tr key={personId(r)} className="cursor-pointer hover:bg-slate-50 transition-colors" onClick={()=> onOpen(r)}>
               <td className="px-4 py-3">
                 <Button
                   variant="ghost"
