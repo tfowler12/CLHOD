@@ -1,0 +1,105 @@
+import { useState, useEffect } from "react";
+import { DirectoryRecord } from "./types";
+
+export const REGION_KEYS = ["South", "Southeast", "Midwest", "Northeast", "Pacific"] as const;
+export const REGION_COLORS: Record<string, string> = {
+  South: "#092C48",
+  Southeast: "#B72B33",
+  Northeast: "#74922C",
+  Midwest: "#007C85",
+  Pacific: "#D46201",
+};
+
+export const truthyFlag = (v?: string) => {
+  if (!v) return false;
+  const s = String(v).trim().toLowerCase();
+  return ["y", "yes", "true", "1", "✓", "x"].includes(s);
+};
+
+export const deriveRegions = (r: DirectoryRecord) =>
+  REGION_KEYS.filter((k) => truthyFlag(r[k])).map((k) => k);
+
+export const normalize = (s?: string) => (s || "").trim();
+export const personId = (r: DirectoryRecord) =>
+  normalize(r["Person ID"]) || normalize(r.Email);
+export const managerId = (r: DirectoryRecord) =>
+  normalize(r["Manager ID"]) || normalize(r["Manager Email"]);
+export const sortOrderNum = (r: DirectoryRecord) => {
+  const v =
+    (typeof r["Sort Order"] === "string"
+      ? Number(r["Sort Order"])
+      : (r["Sort Order"] as number)) || 0;
+  return Number.isFinite(v) ? v : 0;
+};
+export const mailto = (v?: string) => (v ? `mailto:${v}` : undefined);
+export const telLink = (v?: string) =>
+  v ? `tel:${(v || "").replace(/[^+\d]/g, "")}` : undefined;
+
+export function isNonValue(v?: string) {
+  if (!v) return true;
+  const s = String(v).trim();
+  if (s === "") return true;
+  return /^(false|no|n|0|na|n\/a|n\.?a\.?|none|tbd|to be determined|\-|--)$/i.test(s);
+}
+export function show(v?: string) {
+  return !isNonValue(v);
+}
+
+export function sameRecord(a?: DirectoryRecord | null, b?: DirectoryRecord | null) {
+  if (!a || !b) return false;
+  const aKey = `${a.Name || ""}|${a.Email || ""}|${a.Title || ""}`;
+  const bKey = `${b.Name || ""}|${b.Email || ""}|${b.Title || ""}`;
+  return aKey === bKey;
+}
+
+export function triggerDownload(url: string, filename: string) {
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export function uniqSorted(arr: string[]) {
+  return Array.from(new Set(arr)).sort((a, b) => a.localeCompare(b));
+}
+
+export function trimAll<T extends Record<string, any>>(obj: T): T {
+  const out = { ...obj };
+  Object.keys(out).forEach((k) => {
+    const v = out[k as keyof T];
+    if (typeof v === "string") out[k as keyof T] = v.trim() as any;
+  });
+  return out;
+}
+
+export function hierarchyClasses(depth: number): string {
+  if (depth === 0) return "bg-sky-800 text-white border-sky-900";
+  if (depth === 1) return "bg-emerald-700 text-white border-emerald-800";
+  if (depth === 2) return "bg-indigo-700 text-white border-indigo-800";
+  return "bg-slate-50 text-slate-900 border-slate-300";
+}
+
+export function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState<boolean>(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(min-width: 768px)").matches
+      : true
+  );
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 768px)");
+    const handler = (e: MediaQueryListEvent | MediaQueryList) =>
+      setIsDesktop("matches" in e ? e.matches : (e as MediaQueryList).matches);
+    setIsDesktop(mq.matches);
+    if ((mq as any).addEventListener)
+      mq.addEventListener("change", handler as any);
+    else (mq as any).addListener(handler as any);
+    return () => {
+      if ((mq as any).removeEventListener)
+        mq.removeEventListener("change", handler as any);
+      else (mq as any).removeListener(handler as any);
+    };
+  }, []);
+  return isDesktop;
+}

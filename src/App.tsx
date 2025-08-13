@@ -1,7 +1,4 @@
-
-import React, { useEffect, useMemo, useRef, useState, useLayoutEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import React, { useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -52,8 +49,8 @@ export type DirectoryRecord = {
 };
 
 // ----------------------------- Constants -----------------------------
-const REGION_KEYS = ["South", "Southeast", "Midwest", "Northeast", "Pacific"] as const;
-const REGION_COLORS: Record<string, string> = {
+export const REGION_KEYS = ["South", "Southeast", "Midwest", "Northeast", "Pacific"] as const;
+export const REGION_COLORS: Record<string, string> = {
   South: "#092C48",
   Southeast: "#B72B33",
   Northeast: "#74922C",
@@ -62,12 +59,12 @@ const REGION_COLORS: Record<string, string> = {
 };
 
 // ----------------------------- Helpers -----------------------------
-const truthyFlag = (v?: string) => {
+export const truthyFlag = (v?: string) => {
   if (!v) return false;
   const s = String(v).trim().toLowerCase();
   return ["y","yes","true","1","✓","x"].includes(s);
 };
-const deriveRegions = (r: DirectoryRecord) => REGION_KEYS.filter(k => truthyFlag(r[k])).map(k=>k);
+export const deriveRegions = (r: DirectoryRecord) => REGION_KEYS.filter(k => truthyFlag(r[k])).map(k=>k);
 const normalize = (s?: string) => (s || '').trim();
 const personId = (r: DirectoryRecord) => normalize(r['Person ID']) || normalize(r.Email);
 const managerId = (r: DirectoryRecord) => normalize(r['Manager ID']) || normalize(r['Manager Email']);
@@ -101,7 +98,7 @@ function trimAll<T extends Record<string, any>>(obj: T): T {
   return out;
 }
 
-function RegionPill({ name }:{ name:string }){
+export function RegionPill({ name }:{ name:string }){
   const color = REGION_COLORS[name] || '#5B7183';
   const style: React.CSSProperties = { color, borderColor: color, borderWidth: 1 };
   return <span aria-label={`Region ${name}`} className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-white border" style={style}>{name}</span>;
@@ -133,7 +130,11 @@ function useIsDesktop() {
   return isDesktop;
 }
 
-// ----------------------------- App -----------------------------
+import { Search as SearchIcon } from "lucide-react";
+import { ViewToggle, FilterSelect, CardsView, TableView, BrowseView, DetailsSheet, AdminTools } from "@/components";
+import { DirectoryRecord } from "@/types";
+import { deriveRegions, uniqSorted, show, sameRecord, REGION_KEYS } from "@/utils";
+
 export default function App(){
   const [data, setData] = useState<DirectoryRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -200,7 +201,6 @@ export default function App(){
     })
   },[data, division, department, team, region, query]);
 
-  // Browse: exact name => drill to card (no auto-popup)
   useEffect(()=>{
     if (view !== 'browse') return;
     const q = query.trim().toLowerCase();
@@ -290,6 +290,7 @@ export default function App(){
     </TooltipProvider>
   );
 }
+
 
 // ----------------------------- Views -----------------------------
 function ViewToggle({ view, setView, onResetCards }: { view: 'cards'|'table'|'browse'; setView:(v:'cards'|'table'|'browse')=>void; onResetCards: () => void }){
@@ -1124,3 +1125,4 @@ function DataQA({ records }:{ records: DirectoryRecord[] }){
 }
 
 export { };
+
