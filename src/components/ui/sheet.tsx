@@ -1,39 +1,5 @@
 import React from 'react'
 
-
-interface SheetProps {
-  open: boolean
-  onOpenChange?: (open: boolean) => void
-  children: React.ReactNode
-}
-
-export function Sheet({ open, onOpenChange, children }: SheetProps) {
-  return open ? children : null
-}
-
-interface SheetContentProps {
-  className?: string
-  children: React.ReactNode
-}
-
-export function SheetContent({ className = '', children }: SheetContentProps) {
-  return <div className={`fixed right-0 top-0 h-full w-full sm:w-[28rem] bg-white border-l shadow-xl p-4 overflow-auto ${className}`}>{children}</div>
-}
-
-interface SheetHeaderProps {
-  children: React.ReactNode
-}
-
-export function SheetHeader({ children }: SheetHeaderProps) {
-  return <div className='mb-2'>{children}</div>
-}
-
-interface SheetTitleProps {
-  children: React.ReactNode
-  className?: string
-}
-
-export function SheetTitle({ children, className = '' }: SheetTitleProps) {
 function useFocusTrap(ref: React.RefObject<HTMLDivElement>) {
   React.useEffect(() => {
     const node = ref.current
@@ -81,54 +47,57 @@ function useFocusTrap(ref: React.RefObject<HTMLDivElement>) {
   }, [ref])
 }
 
-export function Sheet({open, onOpenChange, children}: any){ return open ? children : null }
-export function SheetContent({className='', children}: any){
+interface SheetProps {
+  open: boolean
+  onOpenChange?: (open: boolean) => void
+  children: React.ReactNode
+}
+
+export function Sheet({ open, children }: SheetProps) {
+  return open ? <>{children}</> : null
+}
+
+interface SheetContentProps {
+  side?: 'bottom' | 'right'
+  className?: string
+  children: React.ReactNode
+}
+
+export function SheetContent({ side = 'right', className = '', children }: SheetContentProps) {
   const contentRef = React.useRef<HTMLDivElement>(null)
   useFocusTrap(contentRef)
+  const positionClass =
+    side === 'bottom'
+      ? 'absolute inset-x-0 bottom-0 max-h-[90vh] rounded-t-2xl'
+      : 'ml-auto h-full w-full sm:w-[28rem]'
   return (
-    <div
-      className='fixed inset-0 z-[100] bg-black/30 flex'
-      aria-modal="true"
-    >
+    <div className="fixed inset-0 z-[100] bg-black/30 flex" aria-modal="true">
       <div
         ref={contentRef}
-        role='dialog'
-        className={`ml-auto h-full w-full sm:w-[28rem] bg-white border-l shadow-xl p-4 overflow-auto ${className}`}
+        role="dialog"
+        className={`${positionClass} bg-white border shadow-xl p-4 overflow-auto ${className}`}
       >
         {children}
       </div>
     </div>
   )
 }
-export function SheetHeader({children}: any){ return <div className='mb-2'>{children}</div> }
-export function SheetTitle({children, className=''}: any){ return <div className={`text-xl font-semibold ${className}`}>{children}</div> }
-export function Sheet({ open, onOpenChange, children }: any) {
-  if (!open) return null
-  return (
-    <div className="fixed inset-0 z-[200]">
-      <div
-      className="absolute inset-0 bg-black/30"
-      onClick={() => onOpenChange?.(false)}
-      />
-      {children}
-    </div>
-  )
+
+interface SheetHeaderProps {
+  children: React.ReactNode
+  className?: string
 }
 
-export function SheetContent({ className = '', children }: any) {
-  return (
-    <div
-      className={`absolute inset-x-0 bottom-0 max-h-[90vh] bg-white border-t shadow-xl p-4 overflow-auto rounded-t-2xl ${className}`}
-    >
-      {children}
-    </div>
-  )
-}
-
-export function SheetHeader({ children, className = '' }: any) {
+export function SheetHeader({ children, className = '' }: SheetHeaderProps) {
   return <div className={className}>{children}</div>
 }
 
-export function SheetTitle({ children, className = '' }: any) {
+interface SheetTitleProps {
+  children: React.ReactNode
+  className?: string
+}
+
+export function SheetTitle({ children, className = '' }: SheetTitleProps) {
   return <div className={`text-xl font-semibold ${className}`}>{children}</div>
 }
+
