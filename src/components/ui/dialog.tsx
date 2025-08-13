@@ -1,5 +1,29 @@
 import React from 'react'
 
+interface DialogProps {
+  children: React.ReactNode
+}
+
+export function Dialog({ children }: DialogProps) {
+  return <div>{children}</div>
+}
+
+interface DialogTriggerProps {
+  asChild?: boolean
+  children: React.ReactNode
+}
+
+export function DialogTrigger({ asChild, children }: DialogTriggerProps) {
+  return children
+}
+
+interface DialogContentProps {
+  className?: string
+  children: React.ReactNode
+}
+
+export function DialogContent({ className = '', children }: DialogContentProps) {
+=======
 function useFocusTrap(ref: React.RefObject<HTMLDivElement>) {
   React.useEffect(() => {
     const node = ref.current
@@ -78,6 +102,20 @@ export function Dialog({ open, onOpenChange, children }: any) {
   )
 }
 
+interface DialogHeaderProps {
+  children: React.ReactNode
+}
+
+export function DialogHeader({ children }: DialogHeaderProps) {
+  return <div className='mb-2'>{children}</div>
+}
+
+interface DialogTitleProps {
+  children: React.ReactNode
+}
+
+export function DialogTitle({ children }: DialogTitleProps) {
+  return <div className='text-lg font-semibold'>{children}</div>
 export function DialogTrigger({ asChild, children }: any) {
   return children
 }
