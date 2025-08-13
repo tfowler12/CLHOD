@@ -52,8 +52,8 @@ export type DirectoryRecord = {
 };
 
 // ----------------------------- Constants -----------------------------
-const REGION_KEYS = ["South", "Southeast", "Midwest", "Northeast", "Pacific"] as const;
-const REGION_COLORS: Record<string, string> = {
+export const REGION_KEYS = ["South", "Southeast", "Midwest", "Northeast", "Pacific"] as const;
+export const REGION_COLORS: Record<string, string> = {
   South: "#092C48",
   Southeast: "#B72B33",
   Northeast: "#74922C",
@@ -62,12 +62,12 @@ const REGION_COLORS: Record<string, string> = {
 };
 
 // ----------------------------- Helpers -----------------------------
-const truthyFlag = (v?: string) => {
+export const truthyFlag = (v?: string) => {
   if (!v) return false;
   const s = String(v).trim().toLowerCase();
   return ["y","yes","true","1","✓","x"].includes(s);
 };
-const deriveRegions = (r: DirectoryRecord) => REGION_KEYS.filter(k => truthyFlag(r[k])).map(k=>k);
+export const deriveRegions = (r: DirectoryRecord) => REGION_KEYS.filter(k => truthyFlag(r[k])).map(k=>k);
 const normalize = (s?: string) => (s || '').trim();
 const personId = (r: DirectoryRecord) => normalize(r['Person ID']) || normalize(r.Email);
 const managerId = (r: DirectoryRecord) => normalize(r['Manager ID']) || normalize(r['Manager Email']);
@@ -101,7 +101,7 @@ function trimAll<T extends Record<string, any>>(obj: T): T {
   return out;
 }
 
-function RegionPill({ name }:{ name:string }){
+export function RegionPill({ name }:{ name:string }){
   const color = REGION_COLORS[name] || '#5B7183';
   const style: React.CSSProperties = { color, borderColor: color, borderWidth: 1 };
   return <span aria-label={`Region ${name}`} className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-white border" style={style}>{name}</span>;
