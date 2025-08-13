@@ -91,44 +91,6 @@ interface SheetHeaderProps {
 }
 
 export function SheetHeader({ className = '', children }: SheetHeaderProps) {
-}
-
-export function Sheet({ open, children }: SheetProps) {
-  return open ? <>{children}</> : null
-}
-
-interface SheetContentProps {
-  side?: 'bottom' | 'right'
-  className?: string
-  children: React.ReactNode
-}
-
-export function SheetContent({ side = 'right', className = '', children }: SheetContentProps) {
-  const contentRef = React.useRef<HTMLDivElement>(null)
-  useFocusTrap(contentRef)
-  const positionClass =
-    side === 'bottom'
-      ? 'absolute inset-x-0 bottom-0 max-h-[90vh] rounded-t-2xl'
-      : 'ml-auto h-full w-full sm:w-[28rem]'
-  return (
-    <div className="fixed inset-0 z-[100] bg-black/30 flex" aria-modal="true">
-      <div
-        ref={contentRef}
-        role="dialog"
-        className={`${positionClass} bg-white border shadow-xl p-4 overflow-auto ${className}`}
-      >
-        {children}
-      </div>
-    </div>
-  )
-}
-
-interface SheetHeaderProps {
-  children: React.ReactNode
-  className?: string
-}
-
-export function SheetHeader({ children, className = '' }: SheetHeaderProps) {
   return <div className={className}>{children}</div>
 }
 
@@ -138,11 +100,6 @@ interface SheetTitleProps {
 }
 
 export function SheetTitle({ className = '', children }: SheetTitleProps) {
-  children: React.ReactNode
-  className?: string
-}
-
-export function SheetTitle({ children, className = '' }: SheetTitleProps) {
   return <div className={`text-xl font-semibold ${className}`}>{children}</div>
 }
 
