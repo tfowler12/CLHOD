@@ -14,18 +14,15 @@ function useFocusTrap(ref: React.RefObject<HTMLDivElement>) {
         el => !el.hasAttribute('disabled')
       )
 
-    const focusables = getFocusable()
-    focusables[0]?.focus()
-
-    function handleKeyDown(e: KeyboardEvent) {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Tab') return
-      const current = getFocusable()
-      if (current.length === 0) {
+      const focusables = getFocusable()
+      if (focusables.length === 0) {
         e.preventDefault()
         return
       }
-      const first = current[0]
-      const last = current[current.length - 1]
+      const first = focusables[0]
+      const last = focusables[focusables.length - 1]
       if (e.shiftKey) {
         if (document.activeElement === first) {
           e.preventDefault()
@@ -39,6 +36,9 @@ function useFocusTrap(ref: React.RefObject<HTMLDivElement>) {
       }
     }
 
+    const focusables = getFocusable()
+    focusables[0]?.focus()
+
     node.addEventListener('keydown', handleKeyDown)
     return () => {
       node.removeEventListener('keydown', handleKeyDown)
@@ -51,6 +51,46 @@ interface SheetProps {
   open: boolean
   onOpenChange?: (open: boolean) => void
   children: React.ReactNode
+}
+
+export function Sheet({ open, onOpenChange, children }: SheetProps) {
+  if (!open) return null
+  return (
+    <div className="fixed inset-0 z-[200]">
+      <div
+        className="absolute inset-0 bg-black/30"
+        onClick={() => onOpenChange?.(false)}
+      />
+      {children}
+    </div>
+  )
+}
+
+interface SheetContentProps {
+  className?: string
+  children: React.ReactNode
+}
+
+export function SheetContent({ className = '', children }: SheetContentProps) {
+  const contentRef = React.useRef<HTMLDivElement>(null)
+  useFocusTrap(contentRef)
+  return (
+    <div
+      ref={contentRef}
+      role="dialog"
+      className={`absolute inset-x-0 bottom-0 max-h-[90vh] bg-white border-t shadow-xl p-4 overflow-auto rounded-t-2xl ${className}`}
+    >
+      {children}
+    </div>
+  )
+}
+
+interface SheetHeaderProps {
+  className?: string
+  children: React.ReactNode
+}
+
+export function SheetHeader({ className = '', children }: SheetHeaderProps) {
 }
 
 export function Sheet({ open, children }: SheetProps) {
@@ -93,6 +133,11 @@ export function SheetHeader({ children, className = '' }: SheetHeaderProps) {
 }
 
 interface SheetTitleProps {
+  className?: string
+  children: React.ReactNode
+}
+
+export function SheetTitle({ className = '', children }: SheetTitleProps) {
   children: React.ReactNode
   className?: string
 }
