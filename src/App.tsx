@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -148,6 +148,18 @@ export default function App(){
   const [browseTeam, setBrowseTeam] = useState<string | null>(null);
   const [selected, setSelected] = useState<DirectoryRecord|null>(null);
 
+  const resetAll = () => {
+    setQuery('');
+    setDivision('All');
+    setDepartment('All');
+    setTeam('All');
+    setRegion('All');
+    setBrowseDiv(null);
+    setBrowseDept(null);
+    setBrowseTeam(null);
+    setSelected(null);
+  };
+
   useEffect(()=>{ document.title = "Colonial Life Home Office Directory"; },[]);
 
   const isAdmin = useMemo(()=>{
@@ -225,7 +237,7 @@ export default function App(){
               </h1>
             </div>
             <div className="ml-auto flex items-center gap-2">
-              <ViewToggle view={view} setView={setView} />
+              <ViewToggle view={view} setView={setView} onResetCards={resetAll} />
               {isAdmin && <AdminTools data={data} setData={setData} />}
             </div>
           </div>
@@ -280,13 +292,17 @@ export default function App(){
 }
 
 // ----------------------------- Views -----------------------------
-function ViewToggle({ view, setView }: { view: 'cards'|'table'|'browse'; setView:(v:'cards'|'table'|'browse')=>void }){
+function ViewToggle({ view, setView, onResetCards }: { view: 'cards'|'table'|'browse'; setView:(v:'cards'|'table'|'browse')=>void; onResetCards: () => void }){
   return (
     <div className="flex items-center gap-1 rounded-2xl border p-1 shadow-sm">
       <Button variant={view==='browse' ? 'default' : 'ghost'} size="sm" onClick={()=> setView('browse')}>
         <LayoutGrid className="w-4 h-4 mr-1" /> Browse Organization
       </Button>
-      <Button variant={view==='cards' ? 'default' : 'ghost'} size="sm" onClick={()=> setView('cards')}>
+      <Button
+        variant={view==='cards' ? 'default' : 'ghost'}
+        size="sm"
+        onClick={()=>{ if(view==='cards'){ onResetCards(); } setView('cards'); }}
+      >
         <LayoutGrid className="w-4 h-4 mr-1" /> Cards
       </Button>
       <Button variant={view==='table' ? 'default' : 'ghost'} size="sm" onClick={()=> setView('table')}>
@@ -317,6 +333,8 @@ function CardsView({ records, selected, onToggle }: { records: DirectoryRecord[]
           className="rounded-2xl shadow-sm hover:shadow transition cursor-pointer h-full flex flex-col min-h-[240px]"
           onClick={() => onToggle(r)}
         >
+          <CardHeader className="pb-2 flex items-start justify-between">
+            <CardTitle className="text-base flex-1">
           <CardHeader className="pb-2">
             <CardTitle className="text-base">
               <div className="font-medium leading-snug break-words">{r.Name || "(No name)"}</div>
@@ -326,6 +344,12 @@ function CardsView({ records, selected, onToggle }: { records: DirectoryRecord[]
                 </div>
               )}
             </CardTitle>
+            <div className="flex flex-wrap gap-1 justify-end">
+              {(r._Regions || []).map((reg) => (
+                <RegionPill key={reg} name={reg} />
+              ))}
+            </div>
+
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
             <div className="space-y-2 flex-1">
@@ -880,6 +904,7 @@ function DetailsSheet({ record, onOpenChange }:{ record: DirectoryRecord | null;
   if (isDesktop) {
     return (
       <Dialog open={!!record} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-xl p-0 overflow-hidden flex flex-col">
         <DialogContent className="sm:max-w-xl p-0 z-[200] overflow-hidden flex flex-col">
           <DialogHeader className="p-4 border-b">
             <DialogTitle className="sr-only">Details</DialogTitle>
@@ -892,6 +917,7 @@ function DetailsSheet({ record, onOpenChange }:{ record: DirectoryRecord | null;
   }
   return (
     <Sheet open={!!record} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="p-0 overflow-hidden flex flex-col">
       <SheetContent side="bottom" className="p-0 z-[200] overflow-hidden flex flex-col">
         <SheetHeader className="p-4 border-b">
           <SheetTitle className="sr-only">Details</SheetTitle>
@@ -1022,31 +1048,34 @@ function ExportMenu({ records }:{ records: DirectoryRecord[] }){
 }
 
 function AdminTools({ data, setData }:{ data: DirectoryRecord[]; setData:(d:DirectoryRecord[])=>void }){
+  const [open, setOpen] = useState(false);
   return (
-    <Dialog>
-      <DialogTrigger asChild><Button variant='outline' size='sm'><Settings className='w-4 h-4 mr-2'/> Admin</Button></DialogTrigger>
-      <DialogContent className='sm:max-w-2xl'>
-        <DialogHeader><DialogTitle>Admin Tools</DialogTitle></DialogHeader>
-        <Tabs defaultValue='import'>
-          <TabsList className='grid grid-cols-3 gap-2'>
-            <TabsTrigger value='import'>Import CSV</TabsTrigger>
-            <TabsTrigger value='qa'>Data QA</TabsTrigger>
-            <TabsTrigger value='about'>About</TabsTrigger>
-          </TabsList>
-          <TabsContent value='import' className='pt-3'>
-            <CsvImport onParsed={(rows)=> setData(rows.map(r=> ({...r, _Regions: deriveRegions(r)})))} />
-          </TabsContent>
-          <TabsContent value='qa' className='pt-3'>
-            <DataQA records={data} />
-          </TabsContent>
-          <TabsContent value='about' className='pt-3 text-sm text-slate-700'>
-            <p className='mb-2'>Upload a CSV to update the directory. Parsed rows appear in the app immediately (client-side only).</p>
-            <p className='mb-2'>Use the <em>Reload data</em> button to re-fetch <code>/data/directory.json</code> with cache-busting.</p>
-            <p className='mb-2'>Admin is hidden by default — append <code>?admin=1</code> to the URL or set <code>VITE_ENABLE_ADMIN=true</code>.</p>
-          </TabsContent>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
+    <>
+      <Button variant='outline' size='sm' onClick={()=> setOpen(true)}><Settings className='w-4 h-4 mr-2'/> Admin</Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className='sm:max-w-2xl'>
+          <DialogHeader><DialogTitle>Admin Tools</DialogTitle></DialogHeader>
+          <Tabs defaultValue='import'>
+            <TabsList className='grid grid-cols-3 gap-2'>
+              <TabsTrigger value='import'>Import CSV</TabsTrigger>
+              <TabsTrigger value='qa'>Data QA</TabsTrigger>
+              <TabsTrigger value='about'>About</TabsTrigger>
+            </TabsList>
+            <TabsContent value='import' className='pt-3'>
+              <CsvImport onParsed={(rows)=> setData(rows.map(r=> ({...r, _Regions: deriveRegions(r)})))} />
+            </TabsContent>
+            <TabsContent value='qa' className='pt-3'>
+              <DataQA records={data} />
+            </TabsContent>
+            <TabsContent value='about' className='pt-3 text-sm text-slate-700'>
+              <p className='mb-2'>Upload a CSV to update the directory. Parsed rows appear in the app immediately (client-side only).</p>
+              <p className='mb-2'>Use the <em>Reload data</em> button to re-fetch <code>/data/directory.json</code> with cache-busting.</p>
+              <p className='mb-2'>Admin is hidden by default — append <code>?admin=1</code> to the URL or set <code>VITE_ENABLE_ADMIN=true</code>.</p>
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
