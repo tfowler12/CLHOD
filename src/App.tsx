@@ -210,7 +210,19 @@ export default function App(){
           <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
             <div className="flex items-center gap-2">
               <img src="/favicon.ico" alt="" className="w-8 h-8 rounded-xl" />
-              <h1 className="text-xl font-semibold" style={{color:'#19557f'}}>Colonial Life Home Office Directory</h1>
+              <h1 className="text-xl font-semibold">
+                <a
+                  href="/"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    window.location.href = "/";
+                  }}
+                  className="hover:underline"
+                  style={{ color: "#19557f" }}
+                >
+                  Colonial Life Home Office Directory
+                </a>
+              </h1>
             </div>
             <div className="ml-auto flex items-center gap-2">
               <ViewToggle view={view} setView={setView} />
@@ -299,31 +311,53 @@ function FilterSelect({ label, value, setValue, options }:{ label:string; value:
 function CardsView({ records, selected, onToggle }: { records: DirectoryRecord[]; selected: DirectoryRecord | null; onToggle: (r: DirectoryRecord) => void }){
   return (
     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-      {records.map((r, idx)=>(
-        <Card key={idx} className="rounded-2xl shadow-sm hover:shadow transition cursor-pointer h-full flex flex-col" onClick={()=> onToggle(r)}>
+      {records.map((r, idx) => (
+        <Card
+          key={idx}
+          className="rounded-2xl shadow-sm hover:shadow transition cursor-pointer h-full flex flex-col min-h-[240px]"
+          onClick={() => onToggle(r)}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-base">
-              <div className="font-medium leading-snug break-words">{r.Name || '(No name)'}</div>
-              {show(r.Title) && <div className="text-xs text-slate-500 font-normal mt-0.5 leading-snug break-words">{r.Title}</div>}
+              <div className="font-medium leading-snug break-words">{r.Name || "(No name)"}</div>
+              {show(r.Title) && (
+                <div className="text-xs text-slate-500 font-normal mt-0.5 leading-snug break-words">
+                  {r.Title}
+                </div>
+              )}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 flex-1 flex flex-col">
-            <div className="text-sm text-slate-700">
-              {([r.Division, r.Department, r.Team].some(show)) && (
-                <div className="break-words">{[r.Division, r.Department, r.Team].filter(show).join(' · ')}</div>
-              )}
-              {show(r.Location) && (
-                <div className="flex items-center gap-1 text-slate-600"><MapPin className="w-4 h-4" /> {r.Location}</div>
-              )}
+          <CardContent className="flex-1 flex flex-col">
+            <div className="space-y-2 flex-1">
+              <div className="text-sm text-slate-700">
+                {([r.Division, r.Department, r.Team].some(show)) && (
+                  <div className="break-words">
+                    {[r.Division, r.Department, r.Team].filter(show).join(" · ")}
+                  </div>
+                )}
+                {show(r.Location) && (
+                  <div className="flex items-center gap-1 text-slate-600">
+                    <MapPin className="w-4 h-4" /> {r.Location}
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {(r._Regions || []).map((reg) => (
+                  <RegionPill key={reg} name={reg} />
+                ))}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-1">
-              {(r._Regions || []).map(reg=> <RegionPill key={reg} name={reg} />)}
-            </div>
-            <div className="mt-auto pt-2">
-              <Button variant="outline" size="sm" onClick={(e)=>{ e.stopPropagation(); onToggle(r); }} className="w-full">
-                {selected && sameRecord(selected, r) ? 'Close full contact info' : 'Show full contact info'}
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggle(r);
+              }}
+              className="w-full mt-4"
+            >
+              {selected && sameRecord(selected, r) ? "Close full contact info" : "Show full contact info"}
+            </Button>
           </CardContent>
         </Card>
       ))}
@@ -808,17 +842,25 @@ function DetailsSheet({ record, onOpenChange }:{ record: DirectoryRecord | null;
   );
 
   const BodyBlock = (
-    <div className="p-4 max-h-[75vh] overflow-y-auto space-y-4">
+    <div className="p-4 space-y-4 overflow-y-auto max-h-[75vh] flex-1">
       <div>
         {show(record.Title) && <div className="text-slate-900 font-medium">{record.Title}</div>}
         {([record.Division, record.Department, record.Team].some(show)) && (
-          <div className="text-slate-700">{[record.Division, record.Department, record.Team].filter(show).join(' · ')}</div>
+          <div className="text-slate-700">
+            {[record.Division, record.Department, record.Team].filter(show).join(' · ')}
+          </div>
         )}
         {show(record.Location) && (
-          <div className="flex items-center gap-2 text-slate-700 mt-1"><MapPin className="w-4 h-4" /> {record.Location} {show(record.Timezone) ? <span className="text-slate-500">· {record.Timezone}</span> : null}</div>
+          <div className="flex items-center gap-2 text-slate-700 mt-1">
+            <MapPin className="w-4 h-4" /> {record.Location}
+            {show(record.Timezone) ? <span className="text-slate-500">· {record.Timezone}</span> : null}
+          </div>
         )}
         {([record.Days, record.Hours].some(show)) && (
-          <div className="flex items-center gap-2 text-slate-700"><Clock className="w-4 h-4" /> {(show(record.Days) ? record.Days : '')} {show(record.Hours) ? ` · ${record.Hours}` : null}</div>
+          <div className="flex items-center gap-2 text-slate-700">
+            <Clock className="w-4 h-4" /> {(show(record.Days) ? record.Days : '')}
+            {show(record.Hours) ? ` · ${record.Hours}` : null}
+          </div>
         )}
       </div>
 
@@ -838,7 +880,7 @@ function DetailsSheet({ record, onOpenChange }:{ record: DirectoryRecord | null;
   if (isDesktop) {
     return (
       <Dialog open={!!record} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-xl p-0 z-[200]">
+        <DialogContent className="sm:max-w-xl p-0 z-[200] overflow-hidden flex flex-col">
           <DialogHeader className="p-4 border-b">
             <DialogTitle className="sr-only">Details</DialogTitle>
             {HeaderBlock}
@@ -850,7 +892,7 @@ function DetailsSheet({ record, onOpenChange }:{ record: DirectoryRecord | null;
   }
   return (
     <Sheet open={!!record} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="p-0 z-[200]">
+      <SheetContent side="bottom" className="p-0 z-[200] overflow-hidden flex flex-col">
         <SheetHeader className="p-4 border-b">
           <SheetTitle className="sr-only">Details</SheetTitle>
           {HeaderBlock}
