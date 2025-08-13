@@ -3,11 +3,11 @@ import { DirectoryRecord } from "./types";
 
 export const REGION_KEYS = ["South", "Southeast", "Midwest", "Northeast", "Pacific"] as const;
 export const REGION_COLORS: Record<string, string> = {
-  South: "#092C48",
-  Southeast: "#B72B33",
-  Northeast: "#74922C",
-  Midwest: "#007C85",
-  Pacific: "#D46201",
+  South: "#7FC5E4",
+  Southeast: "#F26C6C",
+  Northeast: "#CCED7B",
+  Midwest: "#63BEB1",
+  Pacific: "#F7AF6D",
 };
 
 export const truthyFlag = (v?: string) => {
@@ -74,10 +74,13 @@ export function trimAll<T extends Record<string, any>>(obj: T): T {
 }
 
 export function hierarchyClasses(depth: number): string {
-  if (depth === 0) return "bg-sky-800 text-white border-sky-900";
-  if (depth === 1) return "bg-emerald-700 text-white border-emerald-800";
-  if (depth === 2) return "bg-indigo-700 text-white border-indigo-800";
-  return "bg-slate-50 text-slate-900 border-slate-300";
+  if (depth === 0)
+    return "bg-[#7FC5E4] text-[#092C48] border-[#19557F]";
+  if (depth === 1)
+    return "bg-[#C3CFDA] text-[#344A5B] border-[#778EA0]";
+  if (depth === 2)
+    return "bg-[#F0F7DC] text-[#74922C] border-[#CCED7B]";
+  return "bg-white text-slate-900 border-[#C3CFDA]";
 }
 
 export function useIsDesktop() {

@@ -69,21 +69,25 @@ export function DialogTrigger({ children }: DialogTriggerProps) {
 interface DialogContentProps {
   className?: string
   children: React.ReactNode
+  onOpenChange?: (open: boolean) => void
+
 }
 
-export function DialogContent({ className = '', children }: DialogContentProps) {
+export function DialogContent({ className = '', children, onOpenChange }: DialogContentProps) {
   const contentRef = React.useRef<HTMLDivElement>(null)
   useFocusTrap(contentRef)
   return (
     <div
       className="fixed inset-0 z-[100] bg-black/30 flex items-center justify-center p-4"
       aria-modal="true"
+      onClick={() => onOpenChange?.(false)}
     >
       <div
         ref={contentRef}
         role="dialog"
         className={`bg-white w-full max-w-2xl rounded-2xl border shadow-xl max-h-[90vh] overflow-auto ${className}`}
-      >
+        onClick={e => e.stopPropagation()}
+        >
         {children}
       </div>
     </div>

@@ -157,8 +157,7 @@ export default function App() {
         <header className="sticky top-0 z-30 backdrop-blur bg-white/80 border-b">
           <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <img src="/favicon.ico" alt="" className="w-8 h-8 rounded-xl" />
-              <h1 className="text-xl font-semibold">
+            <img src="/ColonialLife_2021_RGB.png" alt="Colonial Life logo" className="w-8 h-8 rounded-xl" />              <h1 className="text-xl font-semibold">
                 <a
                   href="/"
                   onClick={(e) => {

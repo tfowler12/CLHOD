@@ -115,7 +115,6 @@ function BrowseView({ data, selectedDiv, selectedDept, selectedTeam, onDiv, onDe
 
       {selectedDiv && selectedDept && !selectedTeam && (
         <div className="space-y-4">
-          <div className="text-sm font-medium text-slate-700">Teams</div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {teamsInDept.map((t)=>(
               <Card key={t} className="rounded-2xl shadow-sm hover:shadow cursor-pointer" onClick={()=> onTeam(t)}>
@@ -250,7 +249,7 @@ function OrgMarketingChart({ rows, divisionName, onOpenCard }:{ rows: DirectoryR
     <div ref={contRef} className="relative w-full">
       <svg className="absolute inset-0 -z-10 pointer-events-none" width={svgBox.w} height={svgBox.h} viewBox={`0 0 ${svgBox.w} ${svgBox.h}`} preserveAspectRatio="none">
         {sharedSegments.map((s, i)=> (
-          <path key={i} d={`M ${s.x1} ${s.y1} L ${s.x2} ${s.y2}`} fill="none" stroke="#CBD5E1" strokeWidth={2} />
+        <path key={i} d={`M ${s.x1} ${s.y1} L ${s.x2} ${s.y2}`} fill="none" stroke="#5B7183" strokeOpacity={0.6} strokeWidth={2} />
         ))}
       </svg>
 
@@ -270,7 +269,7 @@ function OrgMarketingChart({ rows, divisionName, onOpenCard }:{ rows: DirectoryR
               </div>
 
               {isFMD ? (
-                <FMDDepartmentGroups vp={n} allRows={rows} childrenMap={children} onOpenCard={onOpenCard} />
+                <VPSubtree parentId={id} childrenMap={children} onOpenCard={onOpenCard} onToggle={recomputeTopConnectors} />
               ) : (
                 <VerticalStackSubtree parentId={id} childrenMap={children} depth={2} onOpenCard={onOpenCard} />
               )}
@@ -281,95 +280,18 @@ function OrgMarketingChart({ rows, divisionName, onOpenCard }:{ rows: DirectoryR
     </div>
   );
 }
-
-function FMDDepartmentGroups({ vp, allRows, childrenMap, onOpenCard }:{ vp: DirectoryRecord; allRows: DirectoryRecord[]; childrenMap: Map<string, DirectoryRecord[]>; onOpenCard:(r:DirectoryRecord)=>void }){
-  const vpId = personId(vp)!;
-
-  const getDescendants = (id: string): DirectoryRecord[] => {
-    const out: DirectoryRecord[] = [];
-    const q = [id];
-    const seen = new Set<string>();
-    while (q.length) {
-      const cur = q.shift()!;
-      const kids = childrenMap.get(cur) || [];
-      kids.forEach(k => {
-        const pid = personId(k)!;
-        if (!seen.has(pid)) { seen.add(pid); out.push(k); q.push(pid); }
-      });
-    }
-    return out;
+function VPSubtree({ parentId, childrenMap, onOpenCard, onToggle }:{ parentId:string; childrenMap: Map<string, DirectoryRecord[]>; onOpenCard:(r:DirectoryRecord)=>void; onToggle:()=>void }){
+  const [open, setOpen] = useState(false);
+  const handle = () => {
+    setOpen(o=>!o);
+    requestAnimationFrame(onToggle);
   };
-  const descendants = useMemo(()=> getDescendants(vpId), [vpId, childrenMap]);
-
-  const deptNames = useMemo(()=> uniqSorted(descendants.map(d=> d.Department).filter(show) as string[]), [descendants]);
-
-  const [openDepts, setOpenDepts] = useState<Record<string, boolean>>({});
-  const toggle = (dept: string) => setOpenDepts(s => ({ ...s, [dept]: !s[dept] }));
-
   return (
-    <div className="mt-6">
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {deptNames.map(dept => {
-          const key = dept;
-          const open = !!openDepts[key];
-          return (
-            <div key={key} className="relative">
-              <div className="rounded-xl border bg-amber-50 border-amber-300 p-3">
-                <div className="flex items-center justify-between">
-                  <div className="font-medium text-amber-900">{dept}</div>
-                  <Button variant="ghost" size="sm" onClick={()=> toggle(dept)}>{open ? "Hide" : "Show"}</Button>
-                </div>
-              </div>
-              {open && (
-                <div className="mt-3">
-                  <DepartmentSubtree vpId={vpId} department={dept} allRows={allRows} onOpenCard={onOpenCard} />
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function DepartmentSubtree({ vpId, department, allRows, onOpenCard }:{ vpId: string; department: string; allRows: DirectoryRecord[]; onOpenCard:(r:DirectoryRecord)=>void }){
-  const deptRows = useMemo(()=> allRows.filter(r=> r.Department === department), [allRows, department]);
-  const byId = useMemo(()=>{
-    const m = new Map<string, DirectoryRecord>();
-    deptRows.forEach(r=>{ const id = personId(r); if (id) m.set(id, r); });
-    return m;
-  }, [deptRows]);
-  const children = useMemo(()=>{
-    const m = new Map<string, DirectoryRecord[]>();
-    deptRows.forEach(r=>{
-      const pid = personId(r);
-      if (!pid) return;
-      const mid = managerId(r);
-      const key = (mid && byId.has(mid)) ? mid : "__ROOT__";
-      if (!m.has(key)) m.set(key, []);
-      m.get(key)!.push(r);
-    });
-    return m;
-  }, [deptRows, byId]);
-
-  const directDeptReports = useMemo(()=> (children.get(vpId) || []), [children, vpId]);
-
-  return (
-    <div className="pl-6">
-      {directDeptReports.length === 0 ? (
-        <div className="text-sm text-slate-600">No records in this department.</div>
-      ) : (
-        <div className="flex flex-col gap-4">
-          {directDeptReports.map(dr => {
-            const pid = personId(dr)!;
-            return (
-              <div key={pid}>
-                <OrgMiniCard node={dr} depth={2} onOpenCard={onOpenCard} />
-                <VerticalStackSubtree parentId={pid} childrenMap={children} depth={3} onOpenCard={onOpenCard} />
-              </div>
-            );
-          })}
+        <div className="mt-2 text-center">
+      <Button variant="ghost" size="sm" onClick={handle}>{open ? "Hide Org" : "Show Org"}</Button>
+      {open && (
+        <div className="mt-4">
+          <VerticalStackSubtree parentId={parentId} childrenMap={childrenMap} depth={2} onOpenCard={onOpenCard} />
         </div>
       )}
     </div>
@@ -382,14 +304,14 @@ function VerticalStackSubtree({ parentId, childrenMap, depth, onOpenCard }:{ par
 
   return (
     <div className="relative mt-6 ml-10">
-      <div className="absolute left-0 top-0 bottom-0 w-px bg-slate-300" />
+      <div className="absolute left-0 top-0 bottom-0 w-px bg-[#5B7183]/60" />
       <div className="space-y-3">
         {kids.map((k)=>{
           const id = personId(k)!;
           const hasSub = (childrenMap.get(id) || []).length > 0;
           return (
             <div key={id} className="relative pl-4">
-              <div className="absolute left-0 top-5 w-4 h-px bg-slate-300" />
+              <div className="absolute left-0 top-5 w-4 h-px bg-[#5B7183]/60" />
               <OrgMiniCard node={k} depth={depth} onOpenCard={onOpenCard} />
               {hasSub && (
                 <div className="ml-8">

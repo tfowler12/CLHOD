@@ -64,7 +64,7 @@ function DetailsSheet({ record, onOpenChange }:{ record: DirectoryRecord | null;
   if (isDesktop) {
     return (
       <Dialog open={!!record} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-xl p-0 z-[200] overflow-hidden flex flex-col">
+         <DialogContent className="sm:max-w-xl p-0 z-[200] overflow-hidden flex flex-col" onOpenChange={onOpenChange}>
           <DialogHeader className="p-4 border-b">
             <DialogTitle className="sr-only">Details</DialogTitle>
             {HeaderBlock}
@@ -77,7 +77,7 @@ function DetailsSheet({ record, onOpenChange }:{ record: DirectoryRecord | null;
   return (
     <Sheet open={!!record} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="p-0 z-[200] overflow-hidden flex flex-col">
-        <SheetHeader className="p-4 border-b">
+                <SheetHeader className="p-4 border-b">
           <SheetTitle className="sr-only">Details</SheetTitle>
           {HeaderBlock}
         </SheetHeader>
