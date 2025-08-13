@@ -335,6 +335,8 @@ function CardsView({ records, selected, onToggle }: { records: DirectoryRecord[]
         >
           <CardHeader className="pb-2 flex items-start justify-between">
             <CardTitle className="text-base flex-1">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">
               <div className="font-medium leading-snug break-words">{r.Name || "(No name)"}</div>
               {show(r.Title) && (
                 <div className="text-xs text-slate-500 font-normal mt-0.5 leading-snug break-words">
@@ -347,6 +349,7 @@ function CardsView({ records, selected, onToggle }: { records: DirectoryRecord[]
                 <RegionPill key={reg} name={reg} />
               ))}
             </div>
+
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
             <div className="space-y-2 flex-1">
@@ -361,6 +364,11 @@ function CardsView({ records, selected, onToggle }: { records: DirectoryRecord[]
                     <MapPin className="w-4 h-4" /> {r.Location}
                   </div>
                 )}
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {(r._Regions || []).map((reg) => (
+                  <RegionPill key={reg} name={reg} />
+                ))}
               </div>
             </div>
             <Button
@@ -897,6 +905,7 @@ function DetailsSheet({ record, onOpenChange }:{ record: DirectoryRecord | null;
     return (
       <Dialog open={!!record} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-xl p-0 overflow-hidden flex flex-col">
+        <DialogContent className="sm:max-w-xl p-0 z-[200] overflow-hidden flex flex-col">
           <DialogHeader className="p-4 border-b">
             <DialogTitle className="sr-only">Details</DialogTitle>
             {HeaderBlock}
@@ -909,6 +918,7 @@ function DetailsSheet({ record, onOpenChange }:{ record: DirectoryRecord | null;
   return (
     <Sheet open={!!record} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="p-0 overflow-hidden flex flex-col">
+      <SheetContent side="bottom" className="p-0 z-[200] overflow-hidden flex flex-col">
         <SheetHeader className="p-4 border-b">
           <SheetTitle className="sr-only">Details</SheetTitle>
           {HeaderBlock}
