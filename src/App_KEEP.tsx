@@ -274,8 +274,8 @@ function FilterSelect({ label, value, setValue, options }:{ label:string; value:
 function CardsView({ records, selected, onToggle }: { records: DirectoryRecord[]; selected: DirectoryRecord | null; onToggle: (r: DirectoryRecord) => void }){
   return (
     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-      {records.map((r, idx)=>(
-        <Card key={idx} className="rounded-2xl shadow-sm hover:shadow transition cursor-pointer" onClick={()=> onToggle(r)}>
+      {records.map((r)=>(
+        <Card key={personId(r)} className="rounded-2xl shadow-sm hover:shadow transition cursor-pointer" onClick={()=> onToggle(r)}>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">
               <div className="font-medium leading-snug break-words">{r.Name || '(No name)'}</div>
@@ -329,8 +329,8 @@ function TableView({ records, onOpen }: { records: DirectoryRecord[]; onOpen:(r:
           </TableRow>
         </TableHeader>
         <TableBody>
-          {records.map((r, i)=> (
-            <TableRow key={i} className="cursor-pointer hover:bg-slate-50" onClick={()=> onOpen(r)}>
+          {records.map((r)=> (
+            <TableRow key={personId(r)} className="cursor-pointer hover:bg-slate-50" onClick={()=> onOpen(r)}>
               <TableCell className="font-medium">{r.Name}</TableCell>
               <TableCell>{r.Title}</TableCell>
               <TableCell>{r.Department}</TableCell>
@@ -610,7 +610,7 @@ function OrgChart(
         ) : (
           <div className="space-y-8">
             {levels.map((row, i) => (
-              <div key={i} className="relative">
+              <div key={row.map(n => personId(n)).join('|')} className="relative">
                 {i < levels.length - 1 && (
                   <div className="absolute left-8 right-8 top-[calc(100%+0.25rem)] h-px bg-slate-300" />
                 )}
@@ -805,8 +805,8 @@ function ResourceList({ record }:{ record: DirectoryRecord }){
     <div className="space-y-2">
       <div className="font-medium">Resources</div>
       <div className="space-y-2">
-        {visible.map((res, i)=>(
-          <div key={i} className="rounded-xl border p-3 hover:bg-slate-50 flex items-center gap-3">
+        {visible.map((res)=>(
+          <div key={res.label} className="rounded-xl border p-3 hover:bg-slate-50 flex items-center gap-3">
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium break-words">{res.label}</div>
               {res.desc && <div className="text-xs text-slate-600 break-words">{res.desc}</div>}
@@ -909,7 +909,7 @@ function DataQA({ records }:{ records: DirectoryRecord[] }){
   if (!messages.length) return <div className='text-sm text-slate-600'>No data issues found.</div>;
   return (
     <ul className='text-sm text-slate-700 list-disc pl-5 space-y-1'>
-      {messages.map((m,i)=> <li key={i}>{m}</li>)}
+      {messages.map((m)=> <li key={m}>{m}</li>)}
     </ul>
   );
 }
