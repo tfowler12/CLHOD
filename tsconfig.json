@@ -14,8 +14,7 @@
     "isolatedModules": true,
     "strict": true,
     "baseUrl": ".",
-    "paths": { "@/*": ["./src/*"] },
-    "types": ["vitest"]
+    "paths": { "@/*": ["./src/*"] }
   },
   "include": ["src", "tests"]
 }
