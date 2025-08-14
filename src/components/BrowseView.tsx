@@ -27,9 +27,51 @@ function BrowseView({ data, selectedDiv, selectedDept, selectedTeam, onDiv, onDe
   const deptsInDiv = useMemo(()=> uniqSorted(data.filter(r=> selectedDiv ? r.Division===selectedDiv : true).map(r=> r.Department).filter(show) as string[]), [data, selectedDiv]);
   const teamsInDept = useMemo(()=> uniqSorted(data.filter(r=> (selectedDiv ? r.Division===selectedDiv : true) && (selectedDept ? r.Department===selectedDept : true)).map(r=> r.Team).filter(show) as string[]), [data, selectedDiv, selectedDept]);
 
-  const peopleInDiv = useMemo(()=> data.filter(r=> selectedDiv ? r.Division===selectedDiv : false), [data, selectedDiv]);
-  const peopleInDept = useMemo(()=> data.filter(r=> selectedDiv && selectedDept ? r.Division===selectedDiv && r.Department===selectedDept : false), [data, selectedDiv, selectedDept]);
-  const peopleInTeam = useMemo(()=> data.filter(r=> selectedDiv && selectedDept && selectedTeam ? r.Division===selectedDiv && r.Department===selectedDept && r.Team===selectedTeam : false), [data, selectedDiv, selectedDept, selectedTeam]);
+  const peopleInDiv = useMemo(() => data.filter(r => (selectedDiv ? r.Division === selectedDiv : false)), [data, selectedDiv]);
+  const peopleInDept = useMemo(
+    () =>
+      data.filter(r =>
+        selectedDiv && selectedDept
+          ? r.Division === selectedDiv && r.Department === selectedDept
+          : false
+      ),
+    [data, selectedDiv, selectedDept]
+  );
+  const peopleInTeam = useMemo(() => {
+    const arr = data.filter(r =>
+      selectedDiv && selectedDept && selectedTeam
+        ? r.Division === selectedDiv &&
+          r.Department === selectedDept &&
+          r.Team === selectedTeam
+        : false
+    );
+    if (selectedDiv && selectedDiv.toLowerCase() === "sales") {
+      const svps = data.filter(
+        r =>
+          r.Division === selectedDiv &&
+          /senior\s+vice\s+president/i.test(r.Title || "")
+      );
+      const ids = new Set(arr.map(r => personId(r)));
+      svps.forEach(s => {
+        const id = personId(s);
+        if (id && !ids.has(id)) arr.push(s);
+      });
+    }
+    return arr;
+  }, [data, selectedDiv, selectedDept, selectedTeam]);
+
+  const [divPeople, divResources] = useMemo(() => {
+    const p: DirectoryRecord[] = [];
+    const res: DirectoryRecord[] = [];
+    peopleInDiv.forEach(r => (personId(r) ? p : res).push(r));
+    return [p, res];
+  }, [peopleInDiv]);
+
+  const deptResources = useMemo(() => {
+    const res: DirectoryRecord[] = [];
+    peopleInDept.forEach(r => { if (!personId(r)) res.push(r); });
+    return res;
+  }, [peopleInDept]);
 
   return (
     <div className="space-y-4">
@@ -92,22 +134,49 @@ function BrowseView({ data, selectedDiv, selectedDept, selectedTeam, onDiv, onDe
 
       {selectedDiv && !selectedDept && (
         <div className="space-y-4">
-          <div className="text-sm font-medium text-slate-700">Departments</div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {deptsInDiv.map((d)=>(
-              <Card key={d} className="rounded-2xl shadow-sm hover:shadow cursor-pointer" onClick={()=> onDept(d)}>
-                <CardHeader className="pb-2"><CardTitle className="text-base">{d}</CardTitle></CardHeader>
-                <CardContent className="text-sm text-slate-600">
-                  <div>{data.filter(r=> r.Division===selectedDiv && r.Department===d).length} people</div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {deptsInDiv.length > 0 && (
+            <>
+              <div className="text-sm font-medium text-slate-700">Departments</div>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {deptsInDiv.map((d) => (
+                  <Card
+                    key={d}
+                    className="rounded-2xl shadow-sm hover:shadow cursor-pointer"
+                    onClick={() => onDept(d)}
+                  >
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">{d}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-sm text-slate-600">
+                      <div>
+                        {data.filter(
+                          r => r.Division === selectedDiv && r.Department === d
+                        ).length}{" "}
+                        people
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </>
+          )}
+
+          {deptsInDiv.length === 0 && divPeople.length > 0 && (
+            <CardsView records={divPeople} selected={null} onToggle={onOpenCard} />
+          )}
+
+          {deptsInDiv.length === 0 && divResources.length > 0 && (
+            <ResourceCallouts items={divResources} />
+          )}
 
           {orgVisible && (
             <div className="space-y-2">
               <div className="text-sm font-medium text-slate-700">Division Org Chart</div>
-              <OrgMarketingChart rows={peopleInDiv} divisionName={selectedDiv!} onOpenCard={onOpenCard} />
+              <OrgMarketingChart
+                rows={peopleInDiv}
+                divisionName={selectedDiv!}
+                onOpenCard={onOpenCard}
+              />
             </div>
           )}
         </div>
@@ -115,12 +184,28 @@ function BrowseView({ data, selectedDiv, selectedDept, selectedTeam, onDiv, onDe
 
       {selectedDiv && selectedDept && !selectedTeam && (
         <div className="space-y-4">
+          {deptResources.length > 0 && (
+            <ResourceCallouts items={deptResources} />
+          )}
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {teamsInDept.map((t)=>(
-              <Card key={t} className="rounded-2xl shadow-sm hover:shadow cursor-pointer" onClick={()=> onTeam(t)}>
-                <CardHeader className="pb-2"><CardTitle className="text-base">{t}</CardTitle></CardHeader>
+            {teamsInDept.map((t) => (
+              <Card
+                key={t}
+                className="rounded-2xl shadow-sm hover:shadow cursor-pointer"
+                onClick={() => onTeam(t)}
+              >
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">{t}</CardTitle>
+                </CardHeader>
                 <CardContent className="text-sm text-slate-600">
-                  <div>{data.filter(r=> r.Division===selectedDiv && r.Department===selectedDept && r.Team===t).length} people</div>
+                  <div>
+                    {data.filter(
+                      r =>
+                        r.Division === selectedDiv &&
+                        r.Department === selectedDept &&
+                        r.Team === t
+                    ).length} people
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -129,21 +214,29 @@ function BrowseView({ data, selectedDiv, selectedDept, selectedTeam, onDiv, onDe
           {orgVisible && (
             <div className="space-y-2">
               <div className="text-sm font-medium text-slate-700">Department Org Chart</div>
-              <OrgMarketingChart rows={peopleInDept} divisionName={selectedDiv!} onOpenCard={onOpenCard} />
+              <OrgMarketingChart
+                rows={peopleInDept}
+                divisionName={selectedDiv!}
+                onOpenCard={onOpenCard}
+              />
             </div>
           )}
         </div>
       )}
 
       {selectedDiv && selectedDept && selectedTeam && (
-        <div className="space-y-2">
+        <div className="space-y-4">
+          <CardsView records={peopleInTeam} selected={null} onToggle={onOpenCard} />
           {orgVisible && (
             <>
               <div className="text-sm font-medium text-slate-700">Team Org Chart</div>
-              <OrgMarketingChart rows={peopleInTeam} divisionName={selectedDiv!} onOpenCard={onOpenCard} />
+              <OrgMarketingChart
+                rows={peopleInTeam}
+                divisionName={selectedDiv!}
+                onOpenCard={onOpenCard}
+              />
             </>
           )}
-          <TeamDetail data={peopleInTeam} onOpenCard={onOpenCard} />
         </div>
       )}
     </div>
@@ -231,10 +324,10 @@ function OrgMarketingChart({ rows, divisionName, onOpenCard }:{ rows: DirectoryR
     setSvgBox({ w: crect.width, h: crect.height });
   };
 
-  useLayoutEffect(()=>{
-    const raf = requestAnimationFrame(()=> recomputeTopConnectors());
-    return ()=> cancelAnimationFrame(raf);
-  }, [directs]);
+  useLayoutEffect(() => {
+    const raf = requestAnimationFrame(() => recomputeTopConnectors());
+    return () => cancelAnimationFrame(raf);
+  }, [directs, openVP]);
   useEffect(()=>{
     const onResize = ()=> recomputeTopConnectors();
     window.addEventListener('resize', onResize);
@@ -244,10 +337,55 @@ function OrgMarketingChart({ rows, divisionName, onOpenCard }:{ rows: DirectoryR
   }, []);
 
   const isFMD = (divisionName || "").toLowerCase().includes("field") && (divisionName || "").toLowerCase().includes("market");
+  const isSales = (divisionName || "").toLowerCase().includes("sales");
+  const [openVP, setOpenVP] = useState<string|null>(null);
+
+  const { tier2, tier3 } = useMemo(() => {
+    if (!isSales) return { tier2: directs, tier3: [] as DirectoryRecord[] };
+    const vps = directs.filter(d => /vice\s+president|vp/i.test(d.Title || ""));
+    const others = directs.filter(d => !vps.includes(d));
+    return { tier2: vps, tier3: others };
+  }, [directs, isSales]);
+
+  const renderDirect = (n: DirectoryRecord) => {
+    const id = personId(n)!;
+    const hasSub = (children.get(id) || []).length > 0;
+    const opened = openVP === id;
+    return (
+      <div key={id} ref={setDirectRef(id)} className="inline-block text-center">
+        <div className="w-64">
+          <OrgMiniCard node={n} depth={1} onOpenCard={onOpenCard} />
+        </div>
+        {isFMD ? (
+          hasSub && (
+            <div className="mt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setOpenVP(opened ? null : id);
+                  requestAnimationFrame(recomputeTopConnectors);
+                }}
+              >
+                {opened ? "Hide Org" : "Show Org"}
+              </Button>
+            </div>
+          )
+        ) : (
+          <VerticalStackSubtree
+            parentId={id}
+            childrenMap={children}
+            depth={2}
+            onOpenCard={onOpenCard}
+          />
+        )}
+      </div>
+    );
+  };
 
   return (
     <div ref={contRef} className="relative w-full">
-      <svg className="absolute inset-0 -z-10 pointer-events-none" width={svgBox.w} height={svgBox.h} viewBox={`0 0 ${svgBox.w} ${svgBox.h}`} preserveAspectRatio="none">
+      <svg className="absolute inset-0 pointer-events-none" width={svgBox.w} height={svgBox.h} viewBox={`0 0 ${svgBox.w} ${svgBox.h}`} preserveAspectRatio="none">
         {sharedSegments.map((s, i)=> (
         <path key={i} d={`M ${s.x1} ${s.y1} L ${s.x2} ${s.y2}`} fill="none" stroke="#5B7183" strokeOpacity={0.6} strokeWidth={2} />
         ))}
@@ -259,45 +397,24 @@ function OrgMarketingChart({ rows, divisionName, onOpenCard }:{ rows: DirectoryR
         </div>
       </div>
 
-      <div className="flex flex-wrap items-start justify-center gap-6 mb-8">
-        {directs.map((n)=>{
-          const id = personId(n)!;
-          return (
-            <div key={id} ref={setDirectRef(id)} className="inline-block">
-              <div className="w-64">
-                <OrgMiniCard node={n} depth={1} onOpenCard={onOpenCard} />
-              </div>
-
-              {isFMD ? (
-                <VPSubtree parentId={id} childrenMap={children} onOpenCard={onOpenCard} onToggle={recomputeTopConnectors} />
-              ) : (
-                <VerticalStackSubtree parentId={id} childrenMap={children} depth={2} onOpenCard={onOpenCard} />
-              )}
-            </div>
-          );
-        })}
+      <div className="relative">
+        <div className="flex flex-wrap items-start justify-center gap-6 mb-8" >
+          {tier2.map(n => renderDirect(n))}
+        </div>
+        {isSales && tier3.length > 0 && (
+          <div className="flex flex-wrap items-start justify-center gap-6 mb-8">
+            {tier3.map(n => renderDirect(n))}
+          </div>
+        )}
+        {isFMD && openVP && (
+          <div className="absolute left-0 right-0 top-full mt-4 flex justify-center">
+            <VerticalStackSubtree parentId={openVP} childrenMap={children} depth={2} onOpenCard={onOpenCard} />
+          </div>
+        )}
       </div>
     </div>
   );
 }
-function VPSubtree({ parentId, childrenMap, onOpenCard, onToggle }:{ parentId:string; childrenMap: Map<string, DirectoryRecord[]>; onOpenCard:(r:DirectoryRecord)=>void; onToggle:()=>void }){
-  const [open, setOpen] = useState(false);
-  const handle = () => {
-    setOpen(o=>!o);
-    requestAnimationFrame(onToggle);
-  };
-  return (
-        <div className="mt-2 text-center">
-      <Button variant="ghost" size="sm" onClick={handle}>{open ? "Hide Org" : "Show Org"}</Button>
-      {open && (
-        <div className="mt-4">
-          <VerticalStackSubtree parentId={parentId} childrenMap={childrenMap} depth={2} onOpenCard={onOpenCard} />
-        </div>
-      )}
-    </div>
-  );
-}
-
 function VerticalStackSubtree({ parentId, childrenMap, depth, onOpenCard }:{ parentId:string; childrenMap: Map<string, DirectoryRecord[]>; depth: number; onOpenCard:(r:DirectoryRecord)=>void }){
   const kids = (childrenMap.get(parentId) || []).slice();
   if (kids.length === 0) return null;
@@ -338,20 +455,22 @@ function OrgMiniCard({ node, depth, onOpenCard }:{ node: DirectoryRecord; depth:
   );
 }
 
-// ----------------------------- Team Detail -----------------------------
-function TeamDetail({ data, onOpenCard }:{ data: DirectoryRecord[]; onOpenCard:(r:DirectoryRecord)=>void }){
-  const [tab, setTab] = useState<'contacts'|'org'>('contacts');
+function ResourceCallouts({ items }:{ items: DirectoryRecord[] }){
+  if (items.length === 0) return null;
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <Button variant={tab==='contacts'?'default':'ghost'} size="sm" onClick={()=> setTab('contacts')}>Contacts</Button>
-        <Button variant={tab==='org'?'default':'ghost'} size="sm" onClick={()=> setTab('org')}>Org Chart</Button>
-      </div>
-      {tab === 'contacts' ? (
-        <CardsView records={data} selected={null} onToggle={onOpenCard} />
-      ) : (
-        <OrgMarketingChart rows={data} divisionName={(data[0]?.Division || "")} onOpenCard={onOpenCard} />
-      )}
+      {items.map(r => (
+        <Card key={r.Name || r.Resource} className="rounded-2xl border border-[#19557f] bg-[#D3ECF7]">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">{r.Name || r.Resource}</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-slate-600 space-y-1">
+            {r["Team Email"] && <div>{r["Team Email"]}</div>}
+            {r["Support Phone"] && <div>{r["Support Phone"]}</div>}
+            {r.Description && <div>{r.Description}</div>}
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
