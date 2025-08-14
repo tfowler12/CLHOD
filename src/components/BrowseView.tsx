@@ -23,16 +23,45 @@ function BrowseView({ data, selectedDiv, selectedDept, selectedTeam, onDiv, onDe
 }){
   const [orgVisible, setOrgVisible] = useState(true);
 
-  const divisions = useMemo(()=> uniqSorted(data.map(r=> r.Division).filter(show) as string[]), [data]);
-  const deptsInDiv = useMemo(()=> uniqSorted(data.filter(r=> selectedDiv ? r.Division===selectedDiv : true).map(r=> r.Department).filter(show) as string[]), [data, selectedDiv]);
-  const teamsInDept = useMemo(()=> uniqSorted(data.filter(r=> (selectedDiv ? r.Division===selectedDiv : true) && (selectedDept ? r.Department===selectedDept : true)).map(r=> r.Team).filter(show) as string[]), [data, selectedDiv, selectedDept]);
+  const divisions = useMemo(() => uniqSorted(data.map(r => r.Division).filter(show) as string[]), [data]);
+  const deptsInDiv = useMemo(
+    () =>
+      uniqSorted(
+        data
+          .filter(r => (selectedDiv ? normalize(r.Division) === normalize(selectedDiv) : true))
+          .map(r => r.Department)
+          .filter(show) as string[]
+      ),
+    [data, selectedDiv]
+  );
+  const teamsInDept = useMemo(
+    () =>
+      uniqSorted(
+        data
+          .filter(
+            r =>
+              (selectedDiv ? normalize(r.Division) === normalize(selectedDiv) : true) &&
+              (selectedDept ? normalize(r.Department) === normalize(selectedDept) : true)
+          )
+          .map(r => r.Team)
+          .filter(show) as string[]
+      ),
+    [data, selectedDiv, selectedDept]
+  );
 
-  const peopleInDiv = useMemo(() => data.filter(r => (selectedDiv ? r.Division === selectedDiv : false)), [data, selectedDiv]);
+  const peopleInDiv = useMemo(
+    () =>
+      data.filter(r =>
+        selectedDiv ? normalize(r.Division) === normalize(selectedDiv) : false
+      ),
+    [data, selectedDiv]
+  );
   const peopleInDept = useMemo(
     () =>
       data.filter(r =>
         selectedDiv && selectedDept
-          ? r.Division === selectedDiv && r.Department === selectedDept
+          ? normalize(r.Division) === normalize(selectedDiv) &&
+            normalize(r.Department) === normalize(selectedDept)
           : false
       ),
     [data, selectedDiv, selectedDept]
@@ -40,9 +69,9 @@ function BrowseView({ data, selectedDiv, selectedDept, selectedTeam, onDiv, onDe
   const [teamPeople, teamResources] = useMemo(() => {
     const arr = data.filter(r =>
       selectedDiv && selectedDept && selectedTeam
-        ? r.Division === selectedDiv &&
-          r.Department === selectedDept &&
-          r.Team === selectedTeam
+        ? normalize(r.Division) === normalize(selectedDiv) &&
+          normalize(r.Department) === normalize(selectedDept) &&
+          normalize(r.Team) === normalize(selectedTeam)
         : false
     );
     const people: DirectoryRecord[] = [];
@@ -312,11 +341,19 @@ function OrgMarketingChart({ rows, divisionName, onOpenCard }:{ rows: DirectoryR
     const tCenterX = trect.left + trect.width/2 - crect.left;
     const tBottomY = trect.bottom - crect.top;
 
-    const childCenters = Array.from(directRefs.current.values()).map(el=>{
+    const childCenters = Array.from(directRefs.current.values()).map(el => {
       const r = el.getBoundingClientRect();
-      return { x: r.left + r.width/2 - crect.left, yTop: r.top - crect.top };
+      return { x: r.left + r.width / 2 - crect.left, yTop: r.top - crect.top };
     });
     if (childCenters.length === 0) { setSharedSegments([]); return; }
+    const minX0 = Math.min(...childCenters.map(c => c.x));
+    const maxX0 = Math.max(...childCenters.map(c => c.x));
+    const topMost = Math.min(...childCenters.map(c => c.yTop));
+    const yMid = Math.max(tBottomY + 24, topMost - 24);
+    const pad = childCenters.length === 1 ? 24 : 0;
+    const minX = minX0 - pad;
+    const maxX = maxX0 + pad;
+    const segs: any[] = [];
     const minX = Math.min(...childCenters.map(c=>c.x));
     const maxX = Math.max(...childCenters.map(c=>c.x));
     const yMid = tBottomY + 32;
@@ -324,7 +361,7 @@ function OrgMarketingChart({ rows, divisionName, onOpenCard }:{ rows: DirectoryR
     const segs:any[] = [];
     segs.push({ x1: tCenterX, y1: tBottomY, x2: tCenterX, y2: yMid });
     segs.push({ x1: minX, y1: yMid, x2: maxX, y2: yMid });
-    childCenters.forEach(cc=> segs.push({ x1: cc.x, y1: yMid, x2: cc.x, y2: cc.yTop }));
+    childCenters.forEach(cc => segs.push({ x1: cc.x, y1: yMid, x2: cc.x, y2: cc.yTop }));
     setSharedSegments(segs);
     setSvgBox({ w: crect.width, h: crect.height });
   };
@@ -346,7 +383,11 @@ function OrgMarketingChart({ rows, divisionName, onOpenCard }:{ rows: DirectoryR
 
   const { tier2, tier3 } = useMemo(() => {
     if (!isSales) return { tier2: directs, tier3: [] as DirectoryRecord[] };
-    const vps = directs.filter(d => /vice\s+president|vp/i.test(d.Title || ""));
+    const vps = directs.filter(d => {
+      const t = (d.Title || "").toLowerCase();
+      return /(vice\s+president|\bvp\b)/.test(t) &&
+        !/(assistant\s+vice\s+president|\bavp\b)/.test(t);
+    });
     const others = directs.filter(d => !vps.includes(d));
     return { tier2: vps, tier3: others };
   }, [directs, isSales]);
