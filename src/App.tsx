@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Search as SearchIcon } from "lucide-react";
+import { Search as SearchIcon, X as XIcon } from "lucide-react";
 import {
   ViewToggle,
   FilterSelect,
@@ -140,14 +140,14 @@ export default function App() {
     const q = query.trim().toLowerCase();
     if (!q) return;
     const matches = filtered.filter(
-      (r) => (r.Name || "").trim().toLowerCase() === q
+      r => (r.Name || "").trim().toLowerCase() === q
     );
     if (matches.length === 1) {
       const m = matches[0];
-      setBrowseDiv(m.Division || null);
-      setBrowseDept(m.Department || null);
-      setBrowseTeam(m.Team || null);
-      setSelected(null);
+      setSelected(m);
+      setBrowseDiv(null);
+      setBrowseDept(null);
+      setBrowseTeam(null);
     }
   }, [query, filtered, view]);
 
@@ -188,8 +188,22 @@ export default function App() {
                   placeholder="Search name, team, title, email, notes…"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="pl-9 h-10"
+                  className="pl-9 pr-8 h-10"
                 />
+                {query && (
+                  <button
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+                    onClick={() => {
+                      setQuery("");
+                      setBrowseDiv(null);
+                      setBrowseDept(null);
+                      setBrowseTeam(null);
+                      setSelected(null);
+                    }}
+                  >
+                    <XIcon className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
             <div className="md:col-span-8 grid grid-cols-2 md:grid-cols-4 gap-2">
