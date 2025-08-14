@@ -366,6 +366,39 @@ function OrgMarketingChart({ rows, divisionName, onOpenCard }:{ rows: DirectoryR
   const [openVP, setOpenVP] = useState<string|null>(null);
 
   const recomputeTopConnectors = () => {
+    const container = contRef.current;
+    const topNode = topRef.current;
+    if (!container || !topNode) return;
+    const containerRect = container.getBoundingClientRect();
+    const topRect = topNode.getBoundingClientRect();
+    const topCenterX = topRect.left + topRect.width / 2 - containerRect.left;
+    const topBottomY = topRect.bottom - containerRect.top;
+    const directCenters = Array.from(directRefs.current.values()).map((el) => {
+      const r = el.getBoundingClientRect();
+      return {
+        x: r.left + r.width / 2 - containerRect.left,
+        yTop: r.top - containerRect.top,
+      };
+    });
+    if (directCenters.length === 0) {
+      setSharedSegments([]);
+      return;
+    }
+    const minCenterX = Math.min(...directCenters.map((c) => c.x));
+    const maxCenterX = Math.max(...directCenters.map((c) => c.x));
+    const topMostY = Math.min(...directCenters.map((c) => c.yTop));
+    const midY = Math.max(topBottomY + 24, topMostY - 24);
+    const pad = directCenters.length === 1 ? 24 : 0;
+    const minX = minCenterX - pad;
+    const maxX = maxCenterX + pad;
+    const segments: {x1:number;y1:number;x2:number;y2:number}[] = [];
+    segments.push({ x1: topCenterX, y1: topBottomY, x2: topCenterX, y2: midY });
+    segments.push({ x1: minX, y1: midY, x2: maxX, y2: midY });
+    directCenters.forEach((cc) =>
+      segments.push({ x1: cc.x, y1: midY, x2: cc.x, y2: cc.yTop })
+    );
+    setSharedSegments(segments);
+    setSvgBox({ w: containerRect.width, h: containerRect.height });
     const c = contRef.current; const tp = topRef.current;
     if (!c || !tp) return;
     const crect = c.getBoundingClientRect();

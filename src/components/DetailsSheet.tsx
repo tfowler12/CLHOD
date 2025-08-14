@@ -76,8 +76,8 @@ function DetailsSheet({ record, onOpenChange }:{ record: DirectoryRecord | null;
   }
   return (
     <Sheet open={!!record} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="p-0 z-[200] overflow-hidden flex flex-col">
-                <SheetHeader className="p-4 border-b">
+      <SheetContent className="p-0 z-[200] overflow-hidden flex flex-col">
+        <SheetHeader className="p-4 border-b">
           <SheetTitle className="sr-only">Details</SheetTitle>
           {HeaderBlock}
         </SheetHeader>
