@@ -385,8 +385,12 @@ function OrgMarketingChart({ rows, divisionName, onOpenCard }:{ rows: DirectoryR
     const pad = childCenters.length === 1 ? 24 : 0;
     const minX = minX0 - pad;
     const maxX = maxX0 + pad;
-
     const segs: any[] = [];
+    const segs: any[] = [];
+    const minX = Math.min(...childCenters.map(c=>c.x));
+    const maxX = Math.max(...childCenters.map(c=>c.x));
+    const yMid = tBottomY + 32;
+    const segs:any[] = [];
     segs.push({ x1: tCenterX, y1: tBottomY, x2: tCenterX, y2: yMid });
     segs.push({ x1: minX, y1: yMid, x2: maxX, y2: yMid });
     childCenters.forEach(cc => segs.push({ x1: cc.x, y1: yMid, x2: cc.x, y2: cc.yTop }));
