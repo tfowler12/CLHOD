@@ -1,26 +1,58 @@
-import React, { useMemo, useState, useRef, useLayoutEffect, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, {
+  useMemo,
+  useState,
+  useRef,
+  useLayoutEffect,
+  useEffect,
+} from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DirectoryRecord } from "@/types";
 import { CardsView } from "./CardsView";
 import { RegionPill } from "./RegionPill";
-import { show, uniqSorted, personId, managerId, sortOrderNum, normalize, hierarchyClasses } from "@/utils";
+import {
+  show,
+  uniqSorted,
+  personId,
+  managerId,
+  sortOrderNum,
+  normalize,
+  hierarchyClasses,
+} from "@/utils";
 
 // ----------------------------- Browse (Divisions → Depts → Teams) -----------------------------
-function BrowseView({ data, selectedDiv, selectedDept, selectedTeam, onDiv, onDept, onTeam, onBack, onOpenCard, onRoot, onDivCrumb, onDeptCrumb }:{
+export function BrowseView({
+  data,
+  selectedDiv,
+  selectedDept,
+  selectedTeam,
+  onDiv,
+  onDept,
+  onTeam,
+  onBack,
+  onOpenCard,
+  onRoot,
+  onDivCrumb,
+  onDeptCrumb,
+}: {
   data: DirectoryRecord[];
   selectedDiv: string | null;
   selectedDept: string | null;
   selectedTeam: string | null;
-  onDiv: (d:string)=>void;
-  onDept: (d:string)=>void;
-  onTeam: (t:string)=>void;
-  onBack: ()=>void;
-  onOpenCard: (r:DirectoryRecord)=>void;
-  onRoot?: ()=>void;
-  onDivCrumb?: ()=>void;
-  onDeptCrumb?: ()=>void;
-}){
+  onDiv: (d: string) => void;
+  onDept: (d: string) => void;
+  onTeam: (t: string) => void;
+  onBack: () => void;
+  onOpenCard: (r: DirectoryRecord) => void;
+  onRoot?: () => void;
+  onDivCrumb?: () => void;
+  onDeptCrumb?: () => void;
+}) {
   const [orgVisible, setOrgVisible] = useState(true);
 
   const divisions = useMemo(() => uniqSorted(data.map(r => r.Division).filter(show) as string[]), [data]);
@@ -354,10 +386,10 @@ function OrgMarketingChart({ rows, divisionName, onOpenCard }:{ rows: DirectoryR
     const minX = minX0 - pad;
     const maxX = maxX0 + pad;
     const segs: any[] = [];
+    const segs: any[] = [];
     const minX = Math.min(...childCenters.map(c=>c.x));
     const maxX = Math.max(...childCenters.map(c=>c.x));
     const yMid = tBottomY + 32;
-
     const segs:any[] = [];
     segs.push({ x1: tCenterX, y1: tBottomY, x2: tCenterX, y2: yMid });
     segs.push({ x1: minX, y1: yMid, x2: maxX, y2: yMid });
@@ -552,5 +584,3 @@ function ResourceCallouts({ items }:{ items: DirectoryRecord[] }){
     </div>
   );
 }
-
-export { BrowseView };
