@@ -135,21 +135,9 @@ export default function App() {
     });
   }, [data, division, department, team, region, query]);
 
-  useEffect(() => {
-    if (view !== "browse") return;
-    const q = query.trim().toLowerCase();
-    if (!q) return;
-    const matches = filtered.filter(
-      r => (r.Name || "").trim().toLowerCase() === q
-    );
-    if (matches.length === 1) {
-      const m = matches[0];
-      setSelected(m);
-      setBrowseDiv(null);
-      setBrowseDept(null);
-      setBrowseTeam(null);
-    }
-  }, [query, filtered, view]);
+  // When searching within browse view, simply show matching cards rather
+  // than automatically opening the full details sheet. This allows
+  // partial-name searches to surface basic contact cards.
 
   return (
     <TooltipProvider>
@@ -237,40 +225,50 @@ export default function App() {
           </div>
 
           {view === "browse" ? (
-            <BrowseView
-              data={filtered}
-              selectedDiv={browseDiv}
-              selectedDept={browseDept}
-              selectedTeam={browseTeam}
-              onDiv={(d) => {
-                setBrowseDiv(d);
-                setBrowseDept(null);
-                setBrowseTeam(null);
-              }}
-              onDept={(d) => {
-                setBrowseDept(d);
-                setBrowseTeam(null);
-              }}
-              onTeam={(t) => setBrowseTeam(t)}
-              onBack={() => {
-                if (browseTeam) setBrowseTeam(null);
-                else if (browseDept) setBrowseDept(null);
-                else if (browseDiv) setBrowseDiv(null);
-              }}
-              onRoot={() => {
-                setBrowseDiv(null);
-                setBrowseDept(null);
-                setBrowseTeam(null);
-              }}
-              onDivCrumb={() => {
-                setBrowseDept(null);
-                setBrowseTeam(null);
-              }}
-              onDeptCrumb={() => {
-                setBrowseTeam(null);
-              }}
-              onOpenCard={(r) => setSelected(r)}
-            />
+            query.trim() ? (
+              <CardsView
+                records={filtered}
+                selected={selected}
+                onToggle={(r) =>
+                  setSelected(selected && sameRecord(selected, r) ? null : r)
+                }
+              />
+            ) : (
+              <BrowseView
+                data={filtered}
+                selectedDiv={browseDiv}
+                selectedDept={browseDept}
+                selectedTeam={browseTeam}
+                onDiv={(d) => {
+                  setBrowseDiv(d);
+                  setBrowseDept(null);
+                  setBrowseTeam(null);
+                }}
+                onDept={(d) => {
+                  setBrowseDept(d);
+                  setBrowseTeam(null);
+                }}
+                onTeam={(t) => setBrowseTeam(t)}
+                onBack={() => {
+                  if (browseTeam) setBrowseTeam(null);
+                  else if (browseDept) setBrowseDept(null);
+                  else if (browseDiv) setBrowseDiv(null);
+                }}
+                onRoot={() => {
+                  setBrowseDiv(null);
+                  setBrowseDept(null);
+                  setBrowseTeam(null);
+                }}
+                onDivCrumb={() => {
+                  setBrowseDept(null);
+                  setBrowseTeam(null);
+                }}
+                onDeptCrumb={() => {
+                  setBrowseTeam(null);
+                }}
+                onOpenCard={(r) => setSelected(r)}
+              />
+            )
           ) : view === "cards" ? (
             <CardsView
               records={filtered}

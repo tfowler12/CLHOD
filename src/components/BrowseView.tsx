@@ -37,7 +37,7 @@ function BrowseView({ data, selectedDiv, selectedDept, selectedTeam, onDiv, onDe
       ),
     [data, selectedDiv, selectedDept]
   );
-  const peopleInTeam = useMemo(() => {
+  const [teamPeople, teamResources] = useMemo(() => {
     const arr = data.filter(r =>
       selectedDiv && selectedDept && selectedTeam
         ? r.Division === selectedDiv &&
@@ -45,19 +45,22 @@ function BrowseView({ data, selectedDiv, selectedDept, selectedTeam, onDiv, onDe
           r.Team === selectedTeam
         : false
     );
+    const people: DirectoryRecord[] = [];
+    const resources: DirectoryRecord[] = [];
+    arr.forEach(r => (personId(r) ? people : resources).push(r));
     if (selectedDiv && selectedDiv.toLowerCase() === "sales") {
       const svps = data.filter(
         r =>
           r.Division === selectedDiv &&
           /senior\s+vice\s+president/i.test(r.Title || "")
       );
-      const ids = new Set(arr.map(r => personId(r)));
+      const ids = new Set(people.map(r => personId(r)));
       svps.forEach(s => {
         const id = personId(s);
-        if (id && !ids.has(id)) arr.push(s);
+        if (id && !ids.has(id)) people.push(s);
       });
     }
-    return arr;
+    return [people, resources];
   }, [data, selectedDiv, selectedDept, selectedTeam]);
 
   const [divPeople, divResources] = useMemo(() => {
@@ -226,12 +229,13 @@ function BrowseView({ data, selectedDiv, selectedDept, selectedTeam, onDiv, onDe
 
       {selectedDiv && selectedDept && selectedTeam && (
         <div className="space-y-4">
-          <CardsView records={peopleInTeam} selected={null} onToggle={onOpenCard} />
+          <CardsView records={teamPeople} selected={null} onToggle={onOpenCard} />
+          {teamResources.length > 0 && <ResourceCallouts items={teamResources} />}
           {orgVisible && (
             <>
               <div className="text-sm font-medium text-slate-700">Team Org Chart</div>
               <OrgMarketingChart
-                rows={peopleInTeam}
+                rows={teamPeople}
                 divisionName={selectedDiv!}
                 onOpenCard={onOpenCard}
               />
@@ -315,7 +319,7 @@ function OrgMarketingChart({ rows, divisionName, onOpenCard }:{ rows: DirectoryR
     if (childCenters.length === 0) { setSharedSegments([]); return; }
     const minX = Math.min(...childCenters.map(c=>c.x));
     const maxX = Math.max(...childCenters.map(c=>c.x));
-    const yMid = tBottomY + 24;
+    const yMid = tBottomY + 32;
 
     const segs:any[] = [];
     segs.push({ x1: tCenterX, y1: tBottomY, x2: tCenterX, y2: yMid });
@@ -358,18 +362,30 @@ function OrgMarketingChart({ rows, divisionName, onOpenCard }:{ rows: DirectoryR
         </div>
         {isFMD ? (
           hasSub && (
-            <div className="mt-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setOpenVP(opened ? null : id);
-                  requestAnimationFrame(recomputeTopConnectors);
-                }}
-              >
-                {opened ? "Hide Org" : "Show Org"}
-              </Button>
-            </div>
+            <>
+              <div className="mt-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setOpenVP(opened ? null : id);
+                    requestAnimationFrame(recomputeTopConnectors);
+                  }}
+                >
+                  {opened ? "Hide Org" : "Show Org"}
+                </Button>
+              </div>
+              {opened && (
+                <div className="mt-2 flex justify-center">
+                  <VerticalStackSubtree
+                    parentId={id}
+                    childrenMap={children}
+                    depth={2}
+                    onOpenCard={onOpenCard}
+                  />
+                </div>
+              )}
+            </>
           )
         ) : (
           <VerticalStackSubtree
@@ -406,11 +422,6 @@ function OrgMarketingChart({ rows, divisionName, onOpenCard }:{ rows: DirectoryR
             {tier3.map(n => renderDirect(n))}
           </div>
         )}
-        {isFMD && openVP && (
-          <div className="absolute left-0 right-0 top-full mt-4 flex justify-center">
-            <VerticalStackSubtree parentId={openVP} childrenMap={children} depth={2} onOpenCard={onOpenCard} />
-          </div>
-        )}
       </div>
     </div>
   );
@@ -418,6 +429,32 @@ function OrgMarketingChart({ rows, divisionName, onOpenCard }:{ rows: DirectoryR
 function VerticalStackSubtree({ parentId, childrenMap, depth, onOpenCard }:{ parentId:string; childrenMap: Map<string, DirectoryRecord[]>; depth: number; onOpenCard:(r:DirectoryRecord)=>void }){
   const kids = (childrenMap.get(parentId) || []).slice();
   if (kids.length === 0) return null;
+
+  const isManagerLevel = kids.every(k => {
+    const t = (k.Title || "").toLowerCase();
+    return /manager|director|vice\s+president|vp|chief|president|avp|assistant\s+vice\s+president/.test(t);
+  });
+
+  if (isManagerLevel) {
+    return (
+      <div className="mt-6 flex flex-wrap items-start justify-center gap-6">
+        {kids.map(k => {
+          const id = personId(k)!;
+          const hasSub = (childrenMap.get(id) || []).length > 0;
+          return (
+            <div key={id} className="text-center">
+              <OrgMiniCard node={k} depth={depth} onOpenCard={onOpenCard} />
+              {hasSub && (
+                <div className="mt-2">
+                  <VerticalStackSubtree parentId={id} childrenMap={childrenMap} depth={depth+1} onOpenCard={onOpenCard} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div className="relative mt-6 ml-10">
