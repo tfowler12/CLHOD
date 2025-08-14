@@ -193,6 +193,13 @@ export function BrowseView({
 
       {selectedDiv && !selectedDept && (
         <div className="space-y-4">
+          {divPeople.length > 0 && (
+            <>
+              <div className="text-sm font-medium text-slate-700">Leadership</div>
+              <CardsView records={divPeople} selected={null} onToggle={onOpenCard} />
+            </>
+          )}
+
           {deptsInDiv.length > 0 && (
             <>
               <div className="text-sm font-medium text-slate-700">Departments</div>
@@ -218,10 +225,6 @@ export function BrowseView({
                 ))}
               </div>
             </>
-          )}
-
-          {divPeople.length > 0 && (
-            <CardsView records={divPeople} selected={null} onToggle={onOpenCard} />
           )}
 
           {divResources.length > 0 && <ResourceCallouts items={divResources} />}
