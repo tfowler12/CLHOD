@@ -292,3 +292,8 @@ export default function App() {
     </TooltipProvider>
   );
 }
+
+// re-export helpers and components for tests and external usage
+export { truthyFlag, deriveRegions, REGION_COLORS } from "./utils";
+export { RegionPill } from "./components/RegionPill";
+export type { DirectoryRecord } from "./types";
