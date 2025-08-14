@@ -30,9 +30,11 @@ export function OrgChart({ rows, onOpenCard }:{ rows: DirectoryRecord[]; onOpenC
   if (roots.length === 0) return <div className="text-sm text-slate-600">No hierarchy data found.</div>;
 
   return (
-    <div className="space-y-6">
+    <div className="columns-1 sm:columns-2 lg:columns-3 gap-6">
       {roots.map(r => (
-        <OrgNode key={personId(r)!} node={r} childrenMap={children} depth={0} onOpenCard={onOpenCard} />
+        <div key={personId(r)!} className="mb-6 break-inside-avoid">
+          <OrgNode node={r} childrenMap={children} depth={0} onOpenCard={onOpenCard} />
+        </div>
       ))}
     </div>
   );
