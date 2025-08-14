@@ -34,7 +34,7 @@ export default function App() {
   const [selected, setSelected] = useState<DirectoryRecord | null>(null);
 
   useEffect(() => {
-    document.title = "Colonial Life Home Office Directory";
+    document.title = "Home Office Directory";
   }, []);
 
   const isAdmin = useMemo(() => {
@@ -157,7 +157,8 @@ export default function App() {
         <header className="sticky top-0 z-30 backdrop-blur bg-white/80 border-b">
           <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
             <div className="flex items-center gap-2">
-            <img src="/ColonialLife_2021_RGB.png" alt="Colonial Life logo" className="w-8 h-8 rounded-xl" />              <h1 className="text-xl font-semibold">
+            <img src="/ColonialLife_2021_RGB.svg" alt="Colonial Life logo" className="w-40 h-9" />              
+            <h1 className="text-xl font-semibold">
                 <a
                   href="/"
                   onClick={(e) => {
@@ -167,11 +168,11 @@ export default function App() {
                   className="hover:underline"
                   style={{ color: "#19557f" }}
                 >
-                  Colonial Life Home Office Directory
+                  Home Office Directory
                 </a>
               </h1>
             </div>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-5">
               <ViewToggle view={view} setView={setView} />
               {isAdmin && <AdminTools data={data} setData={setData} />}
             </div>

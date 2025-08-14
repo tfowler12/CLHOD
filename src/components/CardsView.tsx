@@ -56,11 +56,7 @@ export function CardsView({
                   </div>
                 )}
               </div>
-              <div className="flex flex-wrap gap-1">
-                {(r._Regions || []).map((reg) => (
-                  <RegionPill key={reg} name={reg} />
-                ))}
-              </div>
+              
             </div>
             <Button
               variant="outline"
