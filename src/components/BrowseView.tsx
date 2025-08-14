@@ -298,6 +298,7 @@ function OrgMarketingChart({ rows, divisionName, onOpenCard }:{ rows: DirectoryR
   };
   const [svgBox, setSvgBox] = useState({w:0,h:0});
   const [sharedSegments, setSharedSegments] = useState<{x1:number;y1:number;x2:number;y2:number}[]>([]);
+  const [openVP, setOpenVP] = useState<string|null>(null);
 
   const recomputeTopConnectors = () => {
     const c = contRef.current; const tp = topRef.current;
@@ -338,7 +339,6 @@ function OrgMarketingChart({ rows, divisionName, onOpenCard }:{ rows: DirectoryR
 
   const isFMD = (divisionName || "").toLowerCase().includes("field") && (divisionName || "").toLowerCase().includes("market");
   const isSales = (divisionName || "").toLowerCase().includes("sales");
-  const [openVP, setOpenVP] = useState<string|null>(null);
 
   const { tier2, tier3 } = useMemo(() => {
     if (!isSales) return { tier2: directs, tier3: [] as DirectoryRecord[] };
